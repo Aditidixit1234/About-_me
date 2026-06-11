@@ -69,7 +69,7 @@
       ctx.stroke();
     }
 
-    // PLAIN BUBBLES — just simple dots, nothing else
+    // PLAIN BUBBLES
     bubbles.forEach(b => {
       b.x += b.vx;
       b.y += b.vy;
@@ -132,7 +132,7 @@ function typeEffect(){
 typeEffect();
 
 // ============================================================
-// 3. SCROLL REVEAL — triggers EVERY time element enters view
+// 3. SCROLL REVEAL
 // ============================================================
 function initScrollReveal(){
   const allReveal = document.querySelectorAll(
@@ -140,7 +140,6 @@ function initScrollReveal(){
     '.skill-category,.proj-card,.exp-card,.ach-item,.edu-row,.stat-card,.sec-header,.about-text,.about-avatar'
   );
 
-  // reset all to hidden on load
   allReveal.forEach(el=>{
     el.classList.remove('in');
     if(el.classList.contains('skill-category') ||
@@ -153,28 +152,20 @@ function initScrollReveal(){
     }
   });
 
-  // stagger groups
-  const groups = [
-    '.skill-category','.proj-card','.exp-card',
-    '.ach-item','.edu-row','.stat-card'
-  ];
+  const groups = ['.skill-category','.proj-card','.exp-card','.ach-item','.edu-row','.stat-card'];
   groups.forEach(sel=>{
     document.querySelectorAll(sel).forEach((el,i)=>{
       el.dataset.delay = i * 100;
     });
   });
 
-  // observer — use threshold 0.08 so it fires reliably
-  // rootMargin negative bottom = fires when element enters from bottom
   const obs = new IntersectionObserver((entries)=>{
     entries.forEach(e=>{
       if(e.isIntersecting){
-        // element coming INTO view — show it
         const delay = parseInt(e.target.dataset.delay||0);
         setTimeout(()=>{
           e.target.classList.add('in');
           e.target.classList.remove('out');
-          // skill tags pop in
           const tags = e.target.querySelectorAll('.sk-tag');
           tags.forEach((t,i)=>{
             t.style.opacity='0';
@@ -184,10 +175,8 @@ function initScrollReveal(){
           });
         }, delay);
       } else {
-        // element leaving view — hide it again so it re-animates next scroll
         e.target.classList.remove('in');
         e.target.classList.add('out');
-        // reset skill tags
         const tags = e.target.querySelectorAll('.sk-tag');
         tags.forEach(t=>{t.style.opacity='0';t.style.transform='scale(0.7) translateY(8px)';});
       }
@@ -199,7 +188,7 @@ function initScrollReveal(){
 initScrollReveal();
 
 // ============================================================
-// 4. COUNTER ANIMATION — re-runs every time stats come into view
+// 4. COUNTER ANIMATION
 // ============================================================
 const counterObs = new IntersectionObserver((entries)=>{
   entries.forEach(e=>{
@@ -216,7 +205,6 @@ const counterObs = new IntersectionObserver((entries)=>{
         },22);
       });
     } else {
-      // reset counters when leaving so they re-animate
       e.target.querySelectorAll('.stat-num').forEach(el=>{
         el.textContent='0';
       });
@@ -290,12 +278,52 @@ document.querySelectorAll('.skill-category').forEach(el=>{
 });
 
 // ============================================================
-// 9. CONTACT FORM
+// 9. CONTACT FORM — Web3Forms
 // ============================================================
-const form=document.getElementById('contact-form');
-if(form) form.addEventListener('submit',(e)=>{
-  e.preventDefault();
-  const btn=form.querySelector('button[type="submit"]');
-  btn.innerHTML='Sent! ✅'; btn.style.background='#16a34a';
-  setTimeout(()=>{btn.innerHTML='Send Message <i class="bx bx-send"></i>';btn.style.background='';form.reset();},3000);
-});
+const form = document.getElementById('contact-form');
+if(form){
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    btn.innerHTML = 'Sending...';
+    btn.disabled = true;
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if(data.success){
+        btn.innerHTML = 'Sent! ✅';
+        btn.style.background = '#16a34a';
+        form.reset();
+        setTimeout(()=>{
+          btn.innerHTML = 'Send Message <i class="bx bx-send"></i>';
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 3000);
+      } else {
+        btn.innerHTML = 'Error! Try again ❌';
+        btn.style.background = '#ef4444';
+        setTimeout(()=>{
+          btn.innerHTML = 'Send Message <i class="bx bx-send"></i>';
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 3000);
+      }
+    } catch(err){
+      btn.innerHTML = 'Error! Try again ❌';
+      btn.style.background = '#ef4444';
+      setTimeout(()=>{
+        btn.innerHTML = 'Send Message <i class="bx bx-send"></i>';
+        btn.style.background = '';
+        btn.disabled = false;
+      }, 3000);
+    }
+  });
+}
